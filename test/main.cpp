@@ -26,6 +26,9 @@ int main() {
         nlohmann::json j2;
         nlohmann::to_json(j2, ul);
         std::cout << j2.dump() << std::endl;
+
+        auto j3 = nlohmann::json::parse("null");
+        std::cout << j3.dump() << " " << j3.is_null() << std::endl;
     }
 
 
