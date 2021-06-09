@@ -95,7 +95,7 @@ class jnobj:
             sa(s, 2, f.out_parse('x', 'j'))
         sa(s, 1, '}')
         line()
-        sa(s, 1, 'void to_json(json & j, %s const & x);' % typ)
+        sa(s, 1, 'inline void to_json(json & j, %s const & x) {' % typ)
         for f in self.fs:
             sa(s, 2, f.out_gen('x', 'j'))
         sa(s, 1, '}')
@@ -104,9 +104,12 @@ class jnobj:
             for l in s:
                 print(l, file=fout)
 
+
+
 def init(ns, nsab = None):
     global NS, NS_AB
     NS, NS_AB = ns, nsab or None
+
 
 def finish(outdir):
     if not os.path.exists(outdir):
@@ -114,4 +117,72 @@ def finish(outdir):
     global objlist
     for obj in objlist:
         obj.write(os.path.join(outdir, '%s.hpp' % obj.name))
+    with open(os.path.join(outdir, 'helper.hpp'), 'w') as fout:
+        s = '''//  To parse this JSON data, first install
+//
+//      json.hpp  https://github.com/nlohmann/json
+//
+//  Then include this file, and then do
+//
+//     helper.hpp data = nlohmann::json::parse(jsonString);
+
+#pragma once
+
+#include <nlohmann/json.hpp>
+
+#include <stdexcept>
+#include <regex>
+
+#include <sstream>
+
+%s
+    using nlohmann::json;
+
+    inline json get_untyped(const json & j, const char * property) {
+        if (j.find(property) != j.end()) {
+            return j.at(property).get<json>();
+        }
+        return json();
+    }
+
+    inline json get_untyped(const json & j, std::string property) {
+        return get_untyped(j, property.data());
+    }
+
+    template <typename T>
+    inline std::shared_ptr<T> get_optional(const json & j, const char * property) {
+        if (j.find(property) != j.end()) {
+            return j.at(property).get<std::shared_ptr<T>>();
+        }
+        return std::shared_ptr<T>();
+    }
+
+    template <typename T>
+    inline std::shared_ptr<T> get_optional(const json & j, std::string property) {
+        return get_optional<T>(j, property.data());
+    }
+%s
+
+#ifndef NLOHMANN_OPT_HELPER
+#define NLOHMANN_OPT_HELPER
+namespace nlohmann {
+    template <typename T>
+    struct adl_serializer<std::shared_ptr<T>> {
+        static void to_json(json & j, const std::shared_ptr<T> & opt) {
+            if (!opt) j = nullptr; else j = *opt;
+        }
+
+        static std::shared_ptr<T> from_json(const json & j) {
+            if (j.is_null()) return std::unique_ptr<T>(); else return std::unique_ptr<T>(new T(j.get<T>()));
+        }
+    };
+}
+#endif
+'''
+        a, b = '', ''
+        for ns in NS.split('::'):
+            a += 'namespace %s {\n' % ns
+            b += '} // namespace %s\n' % ns
+        s = s % (a, b)
+        print(s, file=fout)
 

@@ -38,7 +38,7 @@ namespace nlohmann {
         x.testIdAndTest = my::data::get_optional<int64_t>(j, "test_id_and_test");
     }
 
-    void to_json(json & j, my::data::User const & x);
+    inline void to_json(json & j, my::data::User const & x) {
         if (x.name) j["a"] = x.name;
         if (x.id) j["b"] = x.id;
         if (x.testIdAndTest) j["test_id_and_test"] = x.testIdAndTest;

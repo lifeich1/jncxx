@@ -31,7 +31,7 @@ namespace nlohmann {
         x.users = my::data::get_optional<std::vector<my::data::User>>(j, "users");
     }
 
-    void to_json(json & j, my::data::UserList const & x);
+    inline void to_json(json & j, my::data::UserList const & x) {
         if (x.users) j["users"] = x.users;
     }
 } // namespace nlohmann
