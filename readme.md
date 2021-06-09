@@ -4,6 +4,9 @@
 
 # The simple prototype system aim to replacing quicktype
 
+Generate c++11 code from m4-python-motivated simple script.
+
+
 ## FEATURES
 
 - Provide much more customization.
